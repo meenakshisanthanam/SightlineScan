@@ -5,11 +5,11 @@ services:
     plan: free
     region: oregon
     rootDir: server
-    buildCommand: bash render-build.sh
+    buildCommand: npm install
     startCommand: npm start
     healthCheckPath: /api/health
     envVars:
       - key: PUPPETEER_CACHE_DIR
-        value: /opt/render/.cache/puppeteer
+        value: /opt/render/project/src/.cache/puppeteer
       - key: FRONTEND_URL
         value: "*"
