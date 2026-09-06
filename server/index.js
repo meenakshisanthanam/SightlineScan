@@ -13,15 +13,21 @@ const app = express();
 app.use(cors({ origin: ALLOWED_ORIGIN }));
 app.use(express.json());
 
-const IMPACT_WEIGHTS = { critical: 10, serious: 5, moderate: 2, minor: 1 };
+// Deducted once per distinct rule that fires, not once per element it fires on.
+// A rule that fails on twenty elements is one problem, not twenty.
+const IMPACT_WEIGHTS = { critical: 15, serious: 8, moderate: 4, minor: 2 };
 
-function computeScore(summary) {
-  const penalty =
-    summary.critical * IMPACT_WEIGHTS.critical +
-    summary.serious * IMPACT_WEIGHTS.serious +
-    summary.moderate * IMPACT_WEIGHTS.moderate +
-    summary.minor * IMPACT_WEIGHTS.minor;
+function computeScore(violations) {
+  const penalty = violations.reduce((sum, v) => sum + (IMPACT_WEIGHTS[v.impact] || IMPACT_WEIGHTS.minor), 0);
   return Math.max(0, Math.min(100, Math.round(100 - penalty)));
+}
+
+// axe-core's own rule text is inconsistently punctuated, so make sure
+// everything we render out reads as a finished sentence.
+function ensurePeriod(text) {
+  if (!text) return text;
+  const trimmed = text.trim();
+  return /[.!?]$/.test(trimmed) ? trimmed : `${trimmed}.`;
 }
 
 function normalizeUrl(rawUrl) {
@@ -59,11 +65,12 @@ function transformResults(axeResults) {
         id: violation.id,
         impact,
         wcagCriterion,
-        description: violation.description || violation.help,
+        description: ensurePeriod(violation.description || violation.help),
         htmlSnippet: node.html,
-        suggestedFix:
+        suggestedFix: ensurePeriod(
           node.failureSummary?.replace(/^Fix (any|all) of the following:\s*/i, '').trim() ||
-          violation.help,
+            violation.help
+        ),
         helpUrl: violation.helpUrl,
       });
     }
@@ -73,7 +80,7 @@ function transformResults(axeResults) {
   issues.sort((a, b) => impactOrder[a.impact] - impactOrder[b.impact]);
 
   return {
-    score: computeScore(summary),
+    score: computeScore(axeResults.violations),
     totalIssues: issues.length,
     summary,
     issues,
@@ -119,7 +126,7 @@ app.post('/api/scan', async (req, res) => {
     res.json({ url, ...report });
   } catch (err) {
     console.error('Scan failed for', url, err);
-    res.status(502).json({ error: err.message || 'Scan failed. Please try a different URL.' });
+    res.status(502).json({ error: err.message || 'Scan failed. Try a different URL.' });
   }
 });
 

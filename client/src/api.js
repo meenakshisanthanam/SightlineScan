@@ -9,7 +9,7 @@ export async function scanUrl(url) {
 
   const data = await res.json();
   if (!res.ok) {
-    throw new Error(data.error || 'Something went wrong. Please try again.');
+    throw new Error(data.error || "That didn't go through. Try again in a moment.");
   }
   return data;
 }

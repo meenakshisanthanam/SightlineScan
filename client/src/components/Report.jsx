@@ -1,4 +1,4 @@
-import ScoreRing from './ScoreRing';
+import ScoreCard from './ScoreCard';
 import IssueCard from './IssueCard';
 
 const SEVERITY_ORDER = ['critical', 'serious', 'moderate', 'minor'];
@@ -20,42 +20,41 @@ export default function Report({ report, onRescan }) {
     <div className="report">
       <div className="report__header">
         <div>
-          <p className="report__url-label">Scan results for</p>
+          <p className="kicker">Inspected page</p>
           <p className="report__url">{url}</p>
         </div>
-        <button className="button button--secondary" onClick={onRescan}>
-          Scan another URL
+        <button className="button button--ghost" onClick={onRescan}>
+          New scan
         </button>
       </div>
 
       <div className="report__summary">
-        <ScoreRing score={score} />
-        <div className="summary-counts">
-          <p className="summary-counts__total">
-            {totalIssues} issue{totalIssues === 1 ? '' : 's'} found
-          </p>
-          <div className="summary-counts__grid">
-            {SEVERITY_ORDER.map((severity) => (
-              <div key={severity} className={`summary-count summary-count--${severity}`}>
-                <span className="summary-count__number">{summary[severity] || 0}</span>
-                <span className="summary-count__label">{SEVERITY_LABELS[severity]}</span>
-              </div>
-            ))}
-          </div>
-        </div>
+        <ScoreCard score={score} />
+        <dl className="tally">
+          {SEVERITY_ORDER.map((severity) => (
+            <div key={severity} className="tally__row">
+              <dt className={`tally__label tally__label--${severity}`}>{SEVERITY_LABELS[severity]}</dt>
+              <dd className="tally__value">{summary[severity] || 0}</dd>
+            </div>
+          ))}
+        </dl>
       </div>
 
       {totalIssues === 0 ? (
-        <p className="report__empty">No automatically detectable WCAG issues found. Nice work — manual review is still recommended.</p>
+        <p className="report__empty">
+          Automated checks didn't turn up anything. That's not proof the page is fully accessible.
+          Some problems only a person can catch.
+        </p>
       ) : (
         issuesBySeverity.map((group) => (
           <section key={group.severity} className="issue-group">
             <h2 className={`issue-group__title issue-group__title--${group.severity}`}>
-              {SEVERITY_LABELS[group.severity]} ({group.items.length})
+              {SEVERITY_LABELS[group.severity]}
+              <span className="issue-group__count">{group.items.length}</span>
             </h2>
             <ul className="issue-list">
               {group.items.map((issue, idx) => (
-                <IssueCard key={`${issue.id}-${idx}`} issue={issue} />
+                <IssueCard key={`${issue.id}-${idx}`} issue={issue} index={idx + 1} />
               ))}
             </ul>
           </section>

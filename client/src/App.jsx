@@ -35,14 +35,17 @@ export default function App() {
   return (
     <div className="app">
       <header className="app__header">
+        <p className="kicker"></p>
         <h1 className="app__title">SightlineScan</h1>
-        <p className="app__subtitle">Paste a URL. Get a real WCAG accessibility audit in seconds.</p>
+        <p className="app__subtitle">
+          SightlineScan can quickly find if your site is compliant with WCAG rules and suggest any necessary fixes!
+        </p>
       </header>
 
       {status !== 'done' && (
         <form className="scan-form" onSubmit={handleSubmit}>
-          <label htmlFor="url-input" className="scan-form__label">
-            Website URL
+          <label htmlFor="url-input" className="kicker scan-form__label">
+            Web address
           </label>
           <div className="scan-form__row">
             <input
@@ -55,13 +58,14 @@ export default function App() {
               disabled={status === 'loading'}
               autoFocus
             />
-            <button className="button button--primary" type="submit" disabled={status === 'loading'}>
-              {status === 'loading' ? 'Scanning…' : 'Scan'}
+            <button className="button button--solid" type="submit" disabled={status === 'loading'}>
+              {status === 'loading' ? 'Scanning' : 'Scan'}
             </button>
           </div>
           {status === 'loading' && (
             <p className="scan-form__status" role="status">
-              Crawling the live site and running the audit — this takes a few seconds.
+              Loading the page and checking it against WCAG. Slower sites can take fifteen to
+              twenty seconds.
             </p>
           )}
           {status === 'error' && (
@@ -75,7 +79,7 @@ export default function App() {
       {status === 'done' && report && <Report report={report} onRescan={handleRescan} />}
 
       <footer className="app__footer">
-        <p>Checks powered by axe-core. Single-page scans only — full-site crawling isn&apos;t included yet.</p>
+        <p>This tool was made by Meenakshi Santhanam.</p>
       </footer>
     </div>
   );
