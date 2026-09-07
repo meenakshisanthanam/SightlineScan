@@ -5,11 +5,12 @@ services:
     plan: free
     region: oregon
     rootDir: server
-    buildCommand: npm install
+    # Chrome's location comes from server/.puppeteerrc.cjs, which pins it inside
+    # the project dir. Do NOT set PUPPETEER_CACHE_DIR here: the env var overrides
+    # that config, which is what caused build/runtime to look in different places.
+    buildCommand: npm install && rm -rf .cache/puppeteer && npx puppeteer browsers install chrome
     startCommand: npm start
     healthCheckPath: /api/health
     envVars:
-      - key: PUPPETEER_CACHE_DIR
-        value: /opt/render/project/src/.cache/puppeteer
       - key: FRONTEND_URL
         value: "*"
