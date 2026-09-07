@@ -1,3 +1,5 @@
+const { execSync } = require('child_process');
+const { existsSync } = require('fs');
 const express = require('express');
 const cors = require('cors');
 const puppeteer = require('puppeteer');
@@ -87,7 +89,27 @@ function transformResults(axeResults) {
   };
 }
 
+// Some hosts don't carry files created during the build into the running
+// container, which leaves Puppeteer with no browser to launch. Download it on
+// first use if that happened, so a deploy can recover on its own.
+let browserInstall = null;
+function ensureBrowser() {
+  if (!browserInstall) {
+    browserInstall = (async () => {
+      if (existsSync(puppeteer.executablePath())) return;
+      console.log('Chrome missing at', puppeteer.executablePath(), '- installing now');
+      execSync('npx puppeteer browsers install chrome', { cwd: __dirname, stdio: 'inherit' });
+    })().catch((err) => {
+      browserInstall = null;
+      throw err;
+    });
+  }
+  return browserInstall;
+}
+
 async function runAudit(url) {
+  await ensureBrowser();
+
   const browser = await puppeteer.launch({
     headless: true,
     args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
